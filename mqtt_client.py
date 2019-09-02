@@ -8,21 +8,31 @@ import json
 from datetime import datetime, timedelta
 from db import db_session
 from models import Message
+from sqlalchemy import exc, func
 import logging
+import config
 logging.basicConfig(filename="{}.log".format(__name__), level=logging.DEBUG)
 
 
 # client connack response from the server.
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code: {}".format(str(rc)))
+    
+    if rc == 0:
+        print("Connected with result code: {}".format(str(rc)))
 
-    main_topic = "OWL/Networks"
-    sub_topics = ["ORLFL01", "NANMA01", "DALTX01", "RALNC01"]
+        main_topic = "OWL/Networks"
+        sub_topics = ["ORLFL01", "NANMA01", "DALTX01", "RALNC01"]
 
-    # subscribing in on_connect() means that if we lose the connection and
-    # reconnect then subscriptions will automaticaly be renewed.
-    for i in sub_topics:
-        client.subscribe("{}/{}".format(main_topic, i))
+        # subscribing in on_connect() means that if we lose the connection and
+        # reconnect then subscriptions will automaticaly be renewed.
+        for i in sub_topics:
+            client.subscribe("{}/{}".format(main_topic, i))
+
+        client.connected_flag = True
+    
+    else:
+        print("Bad connection.  Returned code: {}".format(str(rc)))
+        client.bad_connection_flag = True
 
 
 # published message is received from the server.
@@ -33,23 +43,48 @@ def on_message(client, userdata, msg):
     # encode payload object to json
     data = json.loads(msg.payload.decode("utf-8"))
 
-    # create a new message object
-    new_msg = Message(
-        radio_type="Gen5-R64",
-        radio_id=data["radio_id"],
-        network_id=data["network_id"],
-        current=data["current"],
-        level=data["level"]
-    )
+    try:
 
-    # save to database
-    db_session.add(new_msg)
-    db_session.commit()
-    db_session.flush()
+        # create a new message object
+        new_msg = Message(
+            radio_type="Gen5-R64",
+            radio_id=data["radio_id"],
+            network_id=data["network_id"],
+            current=data["current"],
+            level=data["level"]
+        )
 
-    # output the new message id
-    print("New Message Saved as: {}".format(str(new_msg.id)))
+        # save to database
+        db_session.add(new_msg)
+        db_session.commit()
+        db_session.flush()
 
+        # output the new message id
+        print("New Message Saved as: {}".format(str(new_msg.id)))
+
+    except exc.SQLAlchemyError as err:
+        print("Database exception occured: {}".format(str(err)))
+
+
+    # post the data to an endpoint
+    try:
+        r = requests.request(
+            "POST",
+            config.HTTPBIN_BASE_URL,
+            headers={"content-type": "application/json"},
+            data=json.dumps(data)
+        )
+
+        if r.status_code == 200:
+            resp = r.json()
+            print("Response Headers: {} "
+                  "Response Body: {}".format(r.headers, resp))
+        
+        else:
+            print("HTTPBIN returned status code: {}".format(str(r.status_code)))
+
+    except requests.HTTPError as http_err:
+        print("HTTP Error contacting HTTPBIN: {}".format(str(http_err)))
 
 
 # display the message id when a message is published
@@ -62,6 +97,13 @@ def on_subscribe(mqttc, obj, mid, granted_qos):
     print("Subscribed: {} {}".format(str(mid), str(granted_qos)))
 
 
+# on disconnect
+def on_disconnect(client, userdata, rc):
+    print("Client Disconnected: {}".format(str(rc)))
+    client.connected_flag = False
+    client.disconnect_flag = True
+
+
 # on log function
 def on_log(mqttc, obj, level, string):
     print(string)
@@ -70,33 +112,30 @@ def on_log(mqttc, obj, level, string):
 # main
 def main():
     """ Create the MQtt client and loop forever """
-    debug = True
-    host = "172.17.0.2"
-    client_id = "OWL_NETWORKS"
-    keepalive = 60
-    port = 1883
-    password = None
-    username = None
-    verbose = True
-
-    # create mqtt client
-    client = mqtt.Client(client_id)
+    client = mqtt.Client(config.CLIENT_ID)
     logger = logging.getLogger(__name__)
     client.enable_logger(logger)
+    
+    # register callbacks
     client.on_connect = on_connect
     client.on_subscribe = on_subscribe
     client.on_message = on_message
     client.on_publish = on_publish
+    client.on_disconnect = on_disconnect
 
     # check debug
-    if debug:
+    if config.DEBUG:
         client.on_log = on_log
 
-    if username:
-        client.username_pw_set(username, password)
+    if config.MQ_USERNAME:
+        client.username_pw_set(config.MQ_USERNAME, config.MQ_PASSWORD)
 
     # client connect
-    client.connect(host, port, keepalive)
+    client.connect(
+        config.MQ_HOST,
+        config.MQ_PORT,
+        config.MQ_KEEP_ALIVE
+    )
 
     # client loop
     client.loop_forever()
