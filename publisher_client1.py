@@ -36,8 +36,8 @@ def get_reading():
     data["radio_id"] = random.choice(RADIOS)
     data["network_id"] = "ORLFL01"
     data["timestamp"] = datetime.now().strftime("%c")
-    data["level"] = random.random()
-    data["current"] = random.random()
+    data["level"] = random.randint(100, 999)/100.00
+    data["current"] = random.randint(100, 999)/100.00
     data.update()
     return data
 
@@ -83,7 +83,7 @@ def main():
         )
 
         # sleep
-        time.sleep(15.05)
+        time.sleep(5.01)
 
 
 if __name__ == "__main__":

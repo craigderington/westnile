@@ -4,8 +4,10 @@ import context
 import requests
 import paho.mqtt.client as mqtt
 import time
+import json
 from datetime import datetime, timedelta
 from db import db_session
+from models import Message
 import logging
 logging.basicConfig(filename="{}.log".format(__name__), level=logging.DEBUG)
 
@@ -26,7 +28,28 @@ def on_connect(client, userdata, flags, rc):
 # published message is received from the server.
 def on_message(client, userdata, msg):
     """ MQtt on_message function """
-    print("New Message Received: {} {}".format(str(msg.topic), msg.payload.decode("utf-8")))
+    print("New Message Received: {}".format(str(msg.topic)))
+
+    # encode payload object to json
+    data = json.loads(msg.payload.decode("utf-8"))
+
+    # create a new message object
+    new_msg = Message(
+        radio_type="Gen5-R64",
+        radio_id=data["radio_id"],
+        network_id=data["network_id"],
+        current=data["current"],
+        level=data["level"]
+    )
+
+    # save to database
+    db_session.add(new_msg)
+    db_session.commit()
+    db_session.flush()
+
+    # output the new message id
+    print("New Message Saved as: {}".format(str(new_msg.id)))
+
 
 
 # display the message id when a message is published
@@ -55,9 +78,6 @@ def main():
     password = None
     username = None
     verbose = True
-
-    # init db
-    db = db.init_db()
 
     # create mqtt client
     client = mqtt.Client(client_id)

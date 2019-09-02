@@ -37,8 +37,8 @@ def get_reading():
     data["network_id"] = "DALTX01"
     data["radio_name"] = data["network_id"] + "_" + data["radio_id"]
     data["timestamp"] = datetime.now().strftime("%c")
-    data["level"] = random.random()
-    data["current"] = random.random()
+    data["level"] = random.randint(100, 999)/100.00
+    data["current"] = random.randint(100, 999)/100.00
     data.update()
     return data
 
@@ -84,7 +84,7 @@ def main():
         )
 
         # sleep
-        time.sleep(15.26)
+        time.sleep(7.75)
 
 
 if __name__ == "__main__":
