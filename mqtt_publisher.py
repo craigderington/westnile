@@ -12,7 +12,7 @@ import requests
 import string
 import time
 
-
+# configure logging
 logging.basicConfig(filename="{}.log".format(__name__), level=logging.DEBUG)
 
 # constants
@@ -20,8 +20,13 @@ RADIOS = ["8973", "9989", "9990", "10201", "12413", "13773"]
 NETWORKS = ["ORLFL01", "NANMA01", "DALTX01", "RALNC01"]
 
 
-# client connack response from the server.
 def on_connect(client, userdata, flags, rc):
+    """
+    On Connect callback
+    Client connack response from the server.
+    :param client, userdata, flags, rc
+    :return client.connected_flag
+    """
     if rc == 0:
         print("Connected with result code: {}".format(str(rc)))
         client.connected_flag = True
@@ -30,18 +35,33 @@ def on_connect(client, userdata, flags, rc):
         client.disconnect_flag = True
 
 
-# display the message id when a message is published
-def on_publish(mqttc, obj, mid):
+def on_publish(client, obj, mid):
+    """
+    On Publish callback
+    Display the message id when a message is published
+    :param client, obj, mid
+    :return mid <message_id> int
+    """
     print("Published Message ID: {}".format(str(mid)))
 
 
-# on log function
-def on_log(mqttc, obj, level, string):
+def on_log(client, obj, level, string):
+    """
+    On Log callback
+    Logging utilities
+    :param client, obj, level, string
+    :return string
+    """
     print(string)
 
 
-# on disconnect
 def on_disconnect(client, userdata, rc):
+    """
+    On disconnect callback
+    Display message when client disconnects
+    :param client, userdata, rc
+    :return client.disconnect_flag
+    """
     print("Client {} Disconnected: {}".format(str(client), str(rc)))
     client.connected_flag = False
     client.disconnect_flag = True
@@ -49,6 +69,11 @@ def on_disconnect(client, userdata, rc):
 
 # generate a new reading
 def get_reading(client_id):
+    """
+    Generate a psuedo random radio reading
+    :param client_id
+    :return data <dict>
+    """
     data = {}
     data["radio_id"] = random.choice(RADIOS)
     data["network_id"] = client_id
@@ -61,22 +86,21 @@ def get_reading(client_id):
 
 # main
 def main():
-    """ Create the MQtt client and loop forever """    
+    """ 
+    Create the MQtt client 
+    :param client_id <string>
+    :return MQtt publisher client loop
+    """    
     # set the publisher client ID from args
     parser = argparse.ArgumentParser(description="Unique Client ID for MQtt Client")
     parser.add_argument("--client_id", 
-                        type=str, 
+                        type=str,
+                        required=True,
+                        default="ORLFL01", 
                         help="Publisher client requires a client ID.  Must be unique.")
     
     # parse the command line arguments
-    args = parser.parse_args()
-    
-    if args:
-        client_id = args.client_id
-    else:
-        client_id = "".join(
-            [random.choice(string.ascii_letters + string.digits) for _ in range(16)]
-        )
+    args = parser.parse_args()    
 
     # create mqtt client
     client = mqtt.Client(args.client_id)
@@ -92,10 +116,11 @@ def main():
     if config.DEBUG:
         client.on_log = on_log
 
+    # check username
     if config.MQ_USERNAME:
         client.username_pw_set(config.MQ_USERNAME, config.MQ_PASSWORD)
 
-    # publish new messages every 5 minutes  
+    # publish new messages every ~ 5 minutes  
     while True:      
 
         # client connect
@@ -106,10 +131,10 @@ def main():
         )
 
         # get a new random reading and publish
-        reading = get_reading(client_id)
+        reading = get_reading(args.client_id)
         data = json.dumps(reading)
         client.publish(
-            "OWL/Networks/" + client_id,
+            "OWL/Networks/" + args.client_id,
             data
         )
 
