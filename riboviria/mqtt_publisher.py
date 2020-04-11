@@ -17,7 +17,8 @@ logging.basicConfig(filename="{}.log".format(__name__), level=logging.DEBUG)
 
 # constants
 RADIOS = ["8973", "9989", "9990", "10201", "12413", "13773"]
-NETWORKS = ["ORLFL01", "NANMA01", "DALTX01", "RALNC01"]
+NETWORKS = ["NYCNY2011", "BOSMA5077", "LACA3978", "LVNV10022", "SEAWA9011", "TAMFL1042",
+            "RALNC7565", "BALMD3322", "DALTX7701", "CHIIL5555"]
 
 
 def on_connect(client, userdata, flags, rc):
@@ -92,18 +93,20 @@ def main():
     :return MQtt publisher client loop
     """    
     # set the publisher client ID from args
-    parser = argparse.ArgumentParser(description="Unique Client ID for MQtt Client")
-    parser.add_argument("--client_id", 
+    # parser = argparse.ArgumentParser(description="Unique Client ID for MQtt Client")
+    """
+    # parser.add_argument("-c", 
                         type=str,
                         required=True,
-                        default="ORLFL01", 
+                        default="NYCNY2011", 
                         help="Publisher client requires a client ID.  Must be unique.")
     
     # parse the command line arguments
     args = parser.parse_args()    
-
+    """
     # create mqtt client
-    client = mqtt.Client(args.client_id)
+    client_id = NETWORKS[random.randint(0,9)]
+    client = mqtt.Client(client_id)
     logger = logging.getLogger(__name__)
     client.enable_logger(logger)
     
@@ -131,10 +134,10 @@ def main():
         )
 
         # get a new random reading and publish
-        reading = get_reading(args.client_id)
+        reading = get_reading(client_id)
         data = json.dumps(reading)
         client.publish(
-            "OWL/Networks/" + args.client_id,
+            "CLD/Networks/" + client_id,
             data
         )
 

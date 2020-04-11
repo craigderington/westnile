@@ -1,0 +1,31 @@
+version: "2.4"
+services:
+  httpbin:
+    image: kennethreitz/httpbin:latest
+    ports:
+     - "80:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://httpbin/get"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    ports:
+     - "1883:1883"
+     - "9001:9001"
+  
+  mqttclient:
+    build:
+      context: .
+      dockerfile: Dockerfile_MQttClientID
+    
+  mqttpublisher:
+    build:
+      context: .
+      dockerfile: Dockerfile_MQttPublisherID
+  
+  
+

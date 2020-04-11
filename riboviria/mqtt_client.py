@@ -6,11 +6,13 @@ import paho.mqtt.client as mqtt
 import time
 import json
 from datetime import datetime, timedelta
-from db import db_session
+from db import init_db, db_session
 from models import Message
 from sqlalchemy import exc, func
 import logging
 import config
+
+
 logging.basicConfig(filename="{}.log".format(__name__), level=logging.DEBUG)
 
 
@@ -20,8 +22,9 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Connected with result code: {}".format(str(rc)))
 
-        main_topic = "OWL/Networks"
-        sub_topics = ["ORLFL01", "NANMA01", "DALTX01", "RALNC01"]
+        main_topic = "CLD/Networks"
+        sub_topics = ["NYCNY2011", "BOSMA5077", "LACA3978", "LVNV10022", "SEAWA9011", "TAMFL1042",
+        "RALNC7565", "BALMD3322", "DALTX7701", "CHIIL5555"]
 
         # subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will automaticaly be renewed.
@@ -112,9 +115,13 @@ def on_log(mqttc, obj, level, string):
 # main
 def main():
     """ Create the MQtt client and loop forever """
+    # set up the client
     client = mqtt.Client(config.CLIENT_ID)
     logger = logging.getLogger(__name__)
     client.enable_logger(logger)
+    
+    # init sqlite
+    init_db()
     
     # register callbacks
     client.on_connect = on_connect
