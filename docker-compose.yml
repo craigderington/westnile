@@ -21,11 +21,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile_MQttClientID
+    depends_on:
+      - mosquitto
     
   mqttpublisher:
     build:
       context: .
       dockerfile: Dockerfile_MQttPublisherID
-  
+    depends_on:
+      - mosquitto
+
   
 
