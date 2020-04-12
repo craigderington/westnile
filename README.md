@@ -32,10 +32,15 @@ $ docker-compose up --scale mqttpublisher=n
 
 ##### Database
 
-To view database records:
+To view database records; from the command line, run this command
 
 ```
-$ python
+$ docker exec westnile_mqttclient_1 python
+```
+
+Then from the mqttclient container's Python shell...
+
+```
 Python 3.7.3 (default, Dec 13 2019, 19:58:14) 
 [Clang 11.0.0 (clang-1100.0.33.17)] on darwin
 Type "help", "copyright", "credits" or "license" for more information.
