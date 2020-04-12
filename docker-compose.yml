@@ -30,6 +30,14 @@ services:
       dockerfile: Dockerfile_MQttPublisherID
     depends_on:
       - mosquitto
+  
+  mqttclient_browser:
+    image: craigderington/hivemq-client:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mosquitto
+    
 
   
 
