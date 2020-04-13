@@ -1,5 +1,6 @@
 #!.env/bin/python
 
+import os
 import context
 import requests
 import paho.mqtt.client as mqtt
@@ -12,7 +13,7 @@ from sqlalchemy import exc, func
 import logging
 import config
 
-
+# configure logging
 logging.basicConfig(filename="{}.log".format(__name__), level=logging.DEBUG)
 
 
@@ -116,7 +117,6 @@ def get_networks():
     """ read approved network list for client topics """
     networks = []
     path = os.getcwd()
-    dirname = path.replace("riboviria", "")
     filename = "networks.txt"
     with open(path + "\\" + filename, "r") as f1:
         lines = f1.readlines()

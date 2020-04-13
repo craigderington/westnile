@@ -1,5 +1,6 @@
 #!.env/bin/python
 
+import os
 import argparse
 import config
 import context
@@ -15,12 +16,8 @@ import time
 # configure logging
 logging.basicConfig(filename="{}.log".format(__name__), level=logging.DEBUG)
 
-# constants
-RADIOS = ["8973", "9989", "9990", "10201", "12413", "13773"]
-NETWORKS = ["NYCNY2011", "BOSMA5077", "LACA3978", "LVNV10022", "SEAWA9011", "TAMFL1042",
-            "RALNC7565", "BALMD3322", "DALTX7701", "CHIIL5555"]
 
-
+# publisher conack response from server
 def on_connect(client, userdata, flags, rc):
     """
     On Connect callback
@@ -76,13 +73,28 @@ def get_reading(client_id):
     :return data <dict>
     """
     data = {}
-    data["radio_id"] = random.choice(RADIOS)
+    data["radio_id"] = random.randint(2200, 99999)
     data["network_id"] = client_id
     data["timestamp"] = datetime.now().strftime("%c")
     data["level"] = random.randint(100, 999)/100.00
     data["current"] = random.randint(100, 999)/100.00
     data.update()
     return data
+
+
+# read list of approved networks
+def get_networks():
+    """ read approved network list for client topics """
+    networks = []
+    path = os.getcwd()
+    filename = "networks.txt"
+    with open(path + "\\" + filename, "r") as f1:
+        lines = f1.readlines()
+        for line in lines:
+            row = line.replace("\n", "")
+            networks.append(row)
+
+    return networks
 
 
 # main
@@ -105,7 +117,8 @@ def main():
     args = parser.parse_args()    
     """
     # create mqtt client
-    client_id = NETWORKS[random.randint(0,9)]
+    networks = get_networks()
+    client_id = networks[random.randint(0, len(networks))]
     client = mqtt.Client(client_id)
     logger = logging.getLogger(__name__)
     client.enable_logger(logger)
