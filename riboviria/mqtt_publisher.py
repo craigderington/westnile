@@ -86,9 +86,7 @@ def get_reading(client_id):
 def get_networks():
     """ read approved network list for client topics """
     networks = []
-    path = os.getcwd()
-    filename = "networks.txt"
-    with open(path + "\\" + filename, "r") as f1:
+    with open("newtworks", "r") as f1:
         lines = f1.readlines()
         for line in lines:
             row = line.replace("\n", "")
