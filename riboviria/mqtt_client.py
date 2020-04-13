@@ -23,8 +23,7 @@ def on_connect(client, userdata, flags, rc):
         print("Connected with result code: {}".format(str(rc)))
 
         main_topic = "CLD/Networks"
-        sub_topics = ["NYCNY2011", "BOSMA5077", "LACA3978", "LVNV10022", "SEAWA9011", "TAMFL1042",
-        "RALNC7565", "BALMD3322", "DALTX7701", "CHIIL5555"]
+        sub_topics = get_networks()
 
         # subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will automaticaly be renewed.
@@ -50,7 +49,7 @@ def on_message(client, userdata, msg):
 
         # create a new message object
         new_msg = Message(
-            radio_type="Gen5-R64",
+            radio_type="Gen6-R64",
             radio_id=data["radio_id"],
             network_id=data["network_id"],
             current=data["current"],
@@ -111,6 +110,21 @@ def on_disconnect(client, userdata, rc):
 def on_log(mqttc, obj, level, string):
     print(string)
 
+
+# read list of approved networks
+def get_networks():
+    """ read approved network list for client topics """
+    networks = []
+    path = os.getcwd()
+    dirname = path.replace("riboviria", "")
+    filename = "networks.txt"
+    with open(path + "\\" + filename, "r") as f1:
+        lines = f1.readlines()
+        for line in lines:
+            row = line.replace("\n", "")
+            networks.append(row)
+
+    return networks
 
 # main
 def main():
