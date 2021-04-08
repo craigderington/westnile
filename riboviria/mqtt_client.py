@@ -116,7 +116,7 @@ def on_log(mqttc, obj, level, string):
 def get_networks():
     """ read approved network list for client topics """
     networks = []
-    with open("networks", "r") as f1:
+    with open("networks.txt", "r") as f1:
         lines = f1.readlines()
         for line in lines:
             row = line.replace("\n", "")

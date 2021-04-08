@@ -8,5 +8,6 @@ MQ_KEEP_ALIVE = 60
 MQ_PASSWORD = None
 MQ_USERNAME = None
 CLIENT_ID = "CLD_NETWORKS"
-SECRET_KEY = os.urandom(64)  
+SECRET_KEY = os.urandom(64)
 MQ_VERBOSE = True
+SECRET_KEY = os.urandom(64)
